@@ -61,6 +61,7 @@ static void do_tohost_fromhost(uintptr_t dev, uintptr_t cmd, uintptr_t data)
   spinlock_lock(&htif_lock);
     while (tohost)
       __htif_interrupt();
+
     tohost = TOHOST_CMD(dev, cmd, data);
 
     while (1) {
@@ -98,8 +99,27 @@ uintptr_t timer_interrupt()
 
 static uintptr_t mcall_console_putchar(uint8_t ch)
 {
-  do_tohost_fromhost(1, 1, ch);
+  static int buffer_space = 0;
+
+  while (buffer_space < 1) buffer_space = uart_base[7];
+  uart_base[4] = ch;
+  buffer_space--;
+  
   return 0;
+}
+
+static uintptr_t mcall_console_getchar(void)
+{
+  static int bytes_av = 0;
+
+  if (bytes_av == 0) bytes_av = uart_base[10];
+  if (bytes_av == 0) {
+    return (uintptr_t)-1;
+  } else {
+    uint8_t ret = uart_base[8];
+    bytes_av--;
+    return (uintptr_t)ret;
+  }
 }
 
 static uintptr_t mcall_htif_syscall(uintptr_t magic_mem)
@@ -156,15 +176,6 @@ static void reset_ssip()
 
   if (HLS()->sipi_pending || HLS()->console_ibuf > 0)
     set_csr(mip, MIP_SSIP);
-}
-
-static uintptr_t mcall_console_getchar()
-{
-  int ch = atomic_swap(&HLS()->console_ibuf, -1);
-  if (ch >= 0)
-    request_htif_keyboard_interrupt();
-  reset_ssip();
-  return ch - 1;
 }
 
 static uintptr_t mcall_clear_ipi()

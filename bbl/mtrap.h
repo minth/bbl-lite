@@ -34,6 +34,7 @@ extern uintptr_t mem_size;
 extern uintptr_t num_harts;
 extern volatile uint64_t* mtime;
 extern volatile uint32_t* plic_priorities;
+extern volatile uint32_t* uart_base;
 extern size_t plic_ndevs;
 
 typedef struct {
@@ -43,10 +44,8 @@ typedef struct {
   volatile int sipi_pending;
   int console_ibuf;
 
-  volatile uint32_t* plic_m_thresh;
-  volatile uintptr_t* plic_m_ie;
-  volatile uint32_t* plic_s_thresh;
-  volatile uintptr_t* plic_s_ie;
+  volatile uint32_t* plic_thresh;
+  volatile uintptr_t* plic_ie;
 } hls_t;
 
 #define IPI_SOFT      0x1

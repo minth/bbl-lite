@@ -16,7 +16,7 @@ static void supervisor_vm_init()
   pte_t* sbi_pt = (pte_t*)(info.first_user_vaddr - (3 * RISCV_PGSIZE));
   memset(sbi_pt, 0, RISCV_PGSIZE);
   pte_t* middle_pt = (void*)sbi_pt + RISCV_PGSIZE;
-#if __riscv_xlen == 32
+#if !defined(__riscv64) && __riscv_xlen != 64
   size_t num_middle_pts = 1;
   pte_t* root_pt = middle_pt;
   memset(root_pt, 0, RISCV_PGSIZE);
@@ -61,12 +61,14 @@ void print_logo();
 void boot_loader()
 {
   extern char _payload_start, _payload_end;
-  print_logo();
+  //print_logo();
+
   load_kernel_elf(&_payload_start, &_payload_end - &_payload_start, &info);
   supervisor_vm_init();
   mb();
   elf_loaded = 1;
   printm("starting bootstrap at %lx ...\n", info.entry);
+  asm volatile ("li a0, 0xDEADBE10");
   enter_supervisor_mode((void *)info.entry, 0);
 }
 

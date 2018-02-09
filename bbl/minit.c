@@ -11,6 +11,7 @@ uintptr_t mem_size;
 uintptr_t num_harts;
 volatile uint64_t* mtime;
 volatile uint32_t* plic_priorities;
+volatile uint32_t* uart_base;
 size_t plic_ndevs;
 
 static void mstatus_init()
@@ -26,8 +27,8 @@ static void mstatus_init()
   assert(EXTRACT_FIELD(ms, MSTATUS_VM) == VM_CHOICE);
 
   // Enable user/supervisor use of perf counters
-  write_csr(mucounteren, -1);
-  write_csr(mscounteren, -1);
+  //write_csr(mucounteren, -1);
+  //write_csr(mscounteren, -1);
   write_csr(mie, ~MIP_MTIP); // disable timer; enable other interrupts
 }
 
@@ -107,11 +108,10 @@ static void hart_plic_init()
   if (!plic_ndevs)
     return;
 
-  size_t ie_words = plic_ndevs / sizeof(uintptr_t) + 1;
+  size_t ie_words = (plic_ndevs / (sizeof(uintptr_t) * 8)) + 1;
   for (size_t i = 0; i < ie_words; i++)
-    HLS()->plic_s_ie[i] = ULONG_MAX;
-  *HLS()->plic_m_thresh = 1;
-  *HLS()->plic_s_thresh = 0;
+    HLS()->plic_ie[i] = 0;
+  *HLS()->plic_thresh = 0;
 }
 
 void init_first_hart()
@@ -121,6 +121,7 @@ void init_first_hart()
   parse_config_string();
   plic_init();
   hart_plic_init();
+
   //prci_test();
   memory_init();
   boot_loader();

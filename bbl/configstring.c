@@ -34,28 +34,25 @@ static void query_plic(const char* config_string)
   plic_ndevs = get_uint(res);
 }
 
+static void query_uart(const char* config_string)
+{
+  query_result res = query_config_string(config_string, "uart{addr");
+  assert(res.start);
+  uart_base = (void*)(uintptr_t)get_uint(res);
+}
+
 static void query_hart_plic(const char* config_string, hls_t* hls, int core, int hart)
 {
-  char buf[32];
-  snprintf(buf, sizeof buf, "core{%d{%d{plic{m{ie", core, hart);
+  char buf[36];
+  snprintf(buf, sizeof buf, "plic{%d{%d{ie", core, hart);
   query_result res = query_config_string(config_string, buf);
   if (res.start)
-    hls->plic_m_ie = (void*)(uintptr_t)get_uint(res);
+    hls->plic_ie = (void*)(uintptr_t)get_uint(res);
 
-  snprintf(buf, sizeof buf, "core{%d{%d{plic{m{thresh", core, hart);
+  snprintf(buf, sizeof buf, "plic{%d{%d{thres", core, hart);
   res = query_config_string(config_string, buf);
   if (res.start)
-    hls->plic_m_thresh = (void*)(uintptr_t)get_uint(res);
-
-  snprintf(buf, sizeof buf, "core{%d{%d{plic{s{ie", core, hart);
-  res = query_config_string(config_string, buf);
-  if (res.start)
-    hls->plic_s_ie = (void*)(uintptr_t)get_uint(res);
-
-  snprintf(buf, sizeof buf, "core{%d{%d{plic{s{thresh", core, hart);
-  res = query_config_string(config_string, buf);
-  if (res.start)
-    hls->plic_s_thresh = (void*)(uintptr_t)get_uint(res);
+    hls->plic_thresh = (void*)(uintptr_t)get_uint(res);
 }
 
 static void query_harts(const char* config_string)
@@ -98,5 +95,6 @@ void parse_config_string()
   query_mem(s);
   query_plic(s);
   query_rtc(s);
+  query_uart(s);
   query_harts(s);
 }
