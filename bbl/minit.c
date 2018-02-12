@@ -26,8 +26,8 @@ static void mstatus_init()
   assert(EXTRACT_FIELD(ms, MSTATUS_VM) == VM_CHOICE);
 
   // Enable user/supervisor use of perf counters
-  write_csr(mucounteren, -1);
-  write_csr(mscounteren, -1);
+ // write_csr(mucounteren, -1);
+ // write_csr(mscounteren, -1);
   write_csr(mie, ~MIP_MTIP); // disable timer; enable other interrupts
 }
 
